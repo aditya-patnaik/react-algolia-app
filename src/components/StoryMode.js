@@ -1,3 +1,17 @@
+/*
+ *  Filename: StoryMode.js
+ *  Author  : Aditya Patnaik
+ *  Date created : 11th December 2017
+ *  =================
+ * 
+ * Requirements
+ * ************
+ * -> To be displayed when user clicks on enter reading session after selecting some stories in the list screen
+ * -> Contains a sidebar which displays the list of stories in the selection
+ * -> The content screen contains the title of the story accompanied by the iframe which loads the story url
+ * -> At the end we have the comments container which shows the first level comments by default, and can be expanded to view the thread using the view replies button
+ * 
+ */
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import classNames from 'classnames';
@@ -19,11 +33,20 @@ class StoryMode extends Component {
             currentStory: {}
         }
     }
+
+    /*
+     * -> Sets the first element in the selectedStories array as the story being viewed
+     */
     componentDidMount(){
         this.setState({
             currentStory: this.props.storyStore[this.props.selectedStories[0]]
         })
     }
+
+    /*
+     * -> This function is called when the user clicks on a different story in the sidebar
+     * -> As a result the new content is loaded
+     */
     changeCurrentStory(storyIndex){
         console.log(this.props.storyStore[this.props.selectedStories[storyIndex]]);
         this.setState({
@@ -31,6 +54,10 @@ class StoryMode extends Component {
             loader: true
         })
     }
+
+    /*
+     * Function to generate the markup for the sidebar content
+     */
     generateSideBar(){
         var cards = [];
         for(var i=0; i<this.props.selectedStories.length; i++){

@@ -1,3 +1,36 @@
+/*
+ *  Filename: Card.js
+ *  Author  : Aditya Patnaik
+ *  Date created : 7th December 2017
+ *  =================
+ * 
+ * Requirements
+ * ***********************
+ * 1. Display the title of the story
+ * 2. Name of the author
+ * 3. Number of comments
+ * 
+ * Flow
+ * ****
+ * -> It receives the index of the story as a prop
+ * -> When mounted, Check if the story corresponding to the index is present in local storage.
+ * -> If yes:-
+ * 		-> No need of api call, just obtain its value from local storage
+ * 		-> the story is updated in the state
+ * 		-> increment the loadedCardsCounter by 1
+ * 		-> push the same in the redux store(storyStore)
+ * -> If not:-
+ * 		-> an axios call is made to fetch all the details of the story using its index
+ * 		-> If successful:
+ * 			-> the story is added to localStorage
+ * 			-> the story is updated in the state
+ * 			-> increment the loadedCardsCounter by 1
+ * 			-> push the same in the redux store(storyStore)
+ * 		-> If failed:
+ * 			-> The index of the story is removed from the topStories in our redux store
+ * 			-> So that no more amount of time will be spent in fetching the same story(faulty story) and time can be saved
+ * 
+ */
 import React, {Component} from 'react';
 import axios from 'axios';
 import {connect} from 'react-redux';

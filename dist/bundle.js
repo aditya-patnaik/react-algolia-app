@@ -22124,7 +22124,23 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /*
+                                                                                                                                                                                                                                                                   *  Filename: StateReducer.js
+                                                                                                                                                                                                                                                                   *  Author  : Aditya Patnaik
+                                                                                                                                                                                                                                                                   *  Date created : 7th December 2017
+                                                                                                                                                                                                                                                                   *  =================
+                                                                                                                                                                                                                                                                   * 
+                                                                                                                                                                                                                                                                   * State Store description
+                                                                                                                                                                                                                                                                   * ***********************
+                                                                                                                                                                                                                                                                   * 1. Loader : When set to true, displays the loader on the screen and prevents any other activity on the screen
+                                                                                                                                                                                                                                                                   * 2. currentScreen : Decides which screen has to be shown (List Stories or StoryMode)
+                                                                                                                                                                                                                                                                   * 3. LoadedCardsCounter: Keeps track of the number of stories loaded by the card after a successful api call. When its value reaches ten, the loader is disabled
+                                                                                                                                                                                                                                                                   * 4. selectedStories: Is an array that stores the id of all the stories that are selected by the user in the list stories screen
+                                                                                                                                                                                                                                                                   * 5. loaderText: Specifies the text that has to be displayed when the loader is shown on the screen
+                                                                                                                                                                                                                                                                   * 6. topStories: Is an array that contains the index of all the topStories that is returned by an api call
+                                                                                                                                                                                                                                                                   * 7. storyStore: Is an object that stores a story the moment it's loaded, in order to trim the time taken to make an api call. If a story is found in the storyStore then no need of making an api call
+                                                                                                                                                                                                                                                                   * 8. index: Stores the index of the story after which all the stories are displayed. The value of this is updated when the user clicks in the next button.
+                                                                                                                                                                                                                                                                   */
 
 var _types = __webpack_require__(15);
 
@@ -22248,6 +22264,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /*
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 *  Filename: Root.js
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Author  : Aditya Patnaik
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Date created : 7th December 2017
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 *  =================
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * Requirements
@@ -22256,10 +22274,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * -> Contains a list of top stories (10 at a time)
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * -> A next button that fetches the next set(10) of stories
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * -> A main menu that displays appropriate controls at an appropriate time
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * Solution
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * ********
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> A list of cards that display the latest stproes 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
@@ -22296,6 +22310,16 @@ var Root = function (_Component) {
             this.props.setLoaderText('Please wait while we fetch the latest stories');
             this.fetchTopStories();
         }
+
+        /*
+         *
+         * 1. The root component maybe updated multiple times during the application
+         * 2. But the case we are interested in is, when the number of loaded cards equates to 10
+         * 3. Which means all the story cards in the list have fetched their data from the api (i.e. they're loaded)
+         * 4. When all the story cards load, disable the loader and reset the loadedCardsCounter
+         * 
+         */
+
     }, {
         key: 'componentDidUpdate',
         value: function componentDidUpdate() {
@@ -22305,13 +22329,21 @@ var Root = function (_Component) {
                 this.props.setLoaderText('Please wait while we fetch the latest stories');
             }
         }
+
+        /*
+         *
+         * 1. This function is responsible for fetching the top stories from the api
+         * 2. The api returns the id of all the top stories as an array
+         * 3. On successful response we update the topStories in our redux store
+         * 
+         */
+
     }, {
         key: 'fetchTopStories',
         value: function fetchTopStories() {
             var self = this;
             _axios2.default.get('https://hacker-news.firebaseio.com/v0/topstories.json').then(function (response) {
-                self.props.setLoaderText('Fetching stories');
-                //self.props.toggleLoader(false);
+                self.props.setLoaderText('Fetching stories'); // This is done because, once the top stories are fetched, the individual stories have to be fetched again, which requires a loader
                 self.props.updateTopStories({
                     topStories: response.data
                 });
@@ -22319,6 +22351,13 @@ var Root = function (_Component) {
                 console.log(error);
             });
         }
+
+        /*
+         * -> This method is passed as a prop to our card component which displays the story
+         * -> Once the card component finishes loading up the story, it calls this function which lets the redux store know that one out of the ten cards has finished loading
+         * -> After which, its value in the store is incremented by 1
+         */
+
     }, {
         key: 'incrementLoadedCards',
         value: function incrementLoadedCards() {
@@ -22326,6 +22365,11 @@ var Root = function (_Component) {
             var loadedCards = alreadyLoaded + 1;
             this.setState({ loadedCards: loadedCards });
         }
+
+        /*
+         * This method is responsible for generating the markup for the list of top stories
+         */
+
     }, {
         key: 'generateCards',
         value: function generateCards() {
@@ -22341,12 +22385,18 @@ var Root = function (_Component) {
             }
             return cards;
         }
+
+        /*
+         * -> This method updates the index in our redux store
+         * -> It is called when we click on the next button in out list stories page
+         */
+
     }, {
         key: 'updateIndex',
         value: function updateIndex() {
             this.props.updateIndex(this.props.currentState.index + 10);
-            this.props.removeAllStoriesFromSelection(true);
-            this.props.toggleLoader(true);
+            this.props.removeAllStoriesFromSelection(true); // This is done to ensure that there are no selected stories when we go to the next set of stories
+            this.props.toggleLoader(true); // Show the loader again, since the new set of stories will be fetched from the api
             this.props.setLoaderText('Fetching stories');
         }
     }, {
@@ -23450,7 +23500,40 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Filename: Card.js
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Author  : Aditya Patnaik
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Date created : 7th December 2017
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  =================
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * Requirements
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * ***********************
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 1. Display the title of the story
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 2. Name of the author
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 3. Number of comments
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * Flow
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * ****
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> It receives the index of the story as a prop
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> When mounted, Check if the story corresponding to the index is present in local storage.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> If yes:-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> No need of api call, just obtain its value from local storage
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> the story is updated in the state
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> increment the loadedCardsCounter by 1
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> push the same in the redux store(storyStore)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> If not:-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> an axios call is made to fetch all the details of the story using its index
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> If successful:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 			-> the story is added to localStorage
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 			-> the story is updated in the state
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 			-> increment the loadedCardsCounter by 1
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 			-> push the same in the redux store(storyStore)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 		-> If failed:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 			-> The index of the story is removed from the topStories in our redux store
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 			-> So that no more amount of time will be spent in fetching the same story(faulty story) and time can be saved
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
 
 var Card = function (_Component) {
 	_inherits(Card, _Component);
@@ -23674,7 +23757,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Filename: MainMenu.js
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Author  : Aditya Patnaik
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Date created : 10th December 2017
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  =================
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * Requirements
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * ************
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> Show appropriate controls based on requirement
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 1. List screen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> No controls by default
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> Controls start showing up once stories are selected
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> One control lets the user start a reading session with all the selected stories
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> One control lets the user select all the stories in the screen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> One control lets the user deselect all the stories in the screen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 2. Reading session
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> Only one control that is visible all the time
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  -> Which is Go Back to List Stories screen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
 
 var MainMenu = function (_Component) {
     _inherits(MainMenu, _Component);
@@ -23691,26 +23794,48 @@ var MainMenu = function (_Component) {
         return _this;
     }
 
+    /*
+     * 1. This method updates the current screen in our store to reading_session
+     * 2. As a result we enter into reading session mode and a new screen is displayed
+     * 3. The controls on the main menu also changes
+     */
+
+
     _createClass(MainMenu, [{
         key: 'openReadingSession',
         value: function openReadingSession() {
             this.props.updateScreen('reading_session');
         }
+
+        /*
+         * 1. This method adds all the stories in the screen in the selectedStories array in our store
+         */
+
     }, {
         key: 'selectAll',
         value: function selectAll() {
             this.props.addAllStoriesToSelection(true);
         }
+
+        /*
+         * 1. This method removes all the stories in the selectedStories array in our store
+         */
+
     }, {
         key: 'deselectAll',
         value: function deselectAll() {
             this.props.removeAllStoriesFromSelection(true);
         }
+
+        /*
+         * 1. This method takes us back to the list stories screen 
+         */
+
     }, {
         key: 'goBackToTopStories',
         value: function goBackToTopStories() {
             this.props.updateScreen('list_stories');
-            this.props.removeAllStoriesFromSelection(true);
+            this.props.removeAllStoriesFromSelection(true); // Once we go back to our list screen, all the stories are removed from selection
         }
     }, {
         key: 'render',
@@ -23811,7 +23936,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /*
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Filename: StoryMode.js
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Author  : Aditya Patnaik
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  Date created : 11th December 2017
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *  =================
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * Requirements
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * ************
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> To be displayed when user clicks on enter reading session after selecting some stories in the list screen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> Contains a sidebar which displays the list of stories in the selection
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> The content screen contains the title of the story accompanied by the iframe which loads the story url
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * -> At the end we have the comments container which shows the first level comments by default, and can be expanded to view the thread using the view replies button
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
 
 var StoryMode = function (_Component) {
     _inherits(StoryMode, _Component);
@@ -23834,6 +23973,11 @@ var StoryMode = function (_Component) {
         return _this;
     }
 
+    /*
+     * -> Sets the first element in the selectedStories array as the story being viewed
+     */
+
+
     _createClass(StoryMode, [{
         key: 'componentDidMount',
         value: function componentDidMount() {
@@ -23841,6 +23985,12 @@ var StoryMode = function (_Component) {
                 currentStory: this.props.storyStore[this.props.selectedStories[0]]
             });
         }
+
+        /*
+         * -> This function is called when the user clicks on a different story in the sidebar
+         * -> As a result the new content is loaded
+         */
+
     }, {
         key: 'changeCurrentStory',
         value: function changeCurrentStory(storyIndex) {
@@ -23850,6 +24000,11 @@ var StoryMode = function (_Component) {
                 loader: true
             });
         }
+
+        /*
+         * Function to generate the markup for the sidebar content
+         */
+
     }, {
         key: 'generateSideBar',
         value: function generateSideBar() {
